@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "validador-uml"
+version = "0.1.0"
+description = "Revisa diagramas UML tratándolos como lenguajes formales: léxico, gramáticas LALR(1) y reglas semánticas."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Mariano Trevisan" }]
+keywords = ["uml", "plantuml", "mermaid", "lalr", "parser", "shift-reduce", "lenguajes formales"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Topic :: Software Development :: Compilers",
+  "Topic :: Education",
+  "Natural Language :: Spanish",
+]
+dependencies = []
+
+[project.optional-dependencies]
+app = ["pywebview>=6"]
+ejecutable = ["pywebview>=6", "pyinstaller>=6"]
+
+[project.scripts]
+validador-uml = "validador_uml.cli:main"
+
+[project.gui-scripts]
+validador-uml-app = "validador_uml.escritorio.ventana:main"
+
+[project.urls]
+Repositorio = "https://github.com/mariano92004/validador-uml"
+
+[tool.setuptools.packages.find]
+include = ["validador_uml*"]
+
+[tool.setuptools.package-data]
+validador_uml = ["ejemplos/*", "escritorio/interfaz/*", "escritorio/interfaz/fuentes/*"]
