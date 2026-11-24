@@ -120,51 +120,6 @@ esos defectos.
 Entre las reglas hay algunas de cátedra más que de la especificación UML, como
 que un caso de uso empiece con un verbo en infinitivo. Esas son avisos, no errores.
 
-## Por qué este stack
-
-**Python.** Es el lenguaje que más se presta para prototipar un compilador:
-expresiones regulares en la biblioteca estándar, `dataclasses` para el modelo y
-código que se lee como el pseudocódigo del libro. El núcleo no tiene
-dependencias, así que la misma biblioteca sirve para la línea de comandos, la
-aplicación y las pruebas.
-
-**Un analizador LALR(1) propio, sin bibliotecas.** El objetivo es modelar el
-diagrama como lenguaje formal y poder inspeccionar el autómata, no solo obtener
-un sí o un no. Lark y PLY generan analizadores LALR, pero la tabla, los estados
-y la traza quedan como detalles internos o archivos de depuración; ANTLR usa
-LL(*), que no es desplazamiento-reducción, y necesita Java para generar el
-código. El analizador propio ocupa unas 650 líneas sin comentarios y expone la
-tabla, los ítems de cada estado, cada paso y una recuperación de errores a
-medida.
-
-**LALR(1) y no otra variante.** SLR(1) rechaza gramáticas razonables: la del
-ejemplo 4.48 del libro del dragón (`S → L = R | R`) tiene un conflicto en SLR y
-ninguno en LALR, y está en las pruebas. LR(1) canónico acepta un poco más, pero
-multiplica los estados. LALR(1) tiene tantos estados como LR(0), con
-anticipaciones de LR(1).
-
-**Notaciones que ya existen.** Clases, casos de uso y actividad usan un
-subconjunto de PlantUML, y flujo usa `flowchart` de Mermaid: lo que se valida
-acá se puede dibujar con esas herramientas, y Mermaid se ve directo en GitHub.
-Para el MCD no hay una notación textual estándar, así que se definió una en
-castellano con cardinalidades (mín,máx) como en Merise.
-
-**Ventana nativa con pywebview.** La aplicación es una ventana del sistema
-operativo (WebView2 en Windows, ya incluido en Windows 10 y 11) que muestra una
-interfaz en HTML, CSS y JavaScript y llama a Python directamente, sin navegador
-ni servidor visibles. Así la estética coincide exactamente con la del portfolio
-(Doto con puntos redondos, grano, separadores punteados, campo de píxeles), que
-con widgets nativos de Qt o Tkinter habría que reconstruir a mano. Las fuentes
-están incluidas (licencia OFL), así que funciona sin conexión.
-
-**PyInstaller.** Empaqueta Python, la aplicación y la interfaz en un único
-`ValidadorUML.exe` de unos 13 MB que no requiere instalar nada.
-
-**`unittest` y GitHub Actions.** Las pruebas usan la biblioteca estándar (pytest
-también las corre), incluida una batería de textos mutados al azar. Un workflow
-las ejecuta con Python 3.10 a 3.13 en cada push; otro, al publicar una etiqueta
-`v*`, genera el ejecutable en Windows y lo adjunta a la versión.
-
 ## Estructura
 
 ```text
