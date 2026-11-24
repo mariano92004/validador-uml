@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Validador UML</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+  <a class="skip" href="#editor">Saltar al editor</a>
+
+  <header class="hero" id="inicio">
+    <canvas class="field" aria-hidden="true"></canvas>
+
+    <div class="topbar wrap">
+      <p class="file" id="archivo" role="status">Sin archivo</p>
+      <div class="actions" role="toolbar" aria-label="Archivo">
+        <button type="button" class="tool" id="abrir" title="Ctrl+O">Abrir</button>
+        <button type="button" class="tool" id="guardar" title="Ctrl+S">Guardar</button>
+        <button type="button" class="tool" id="guardar-como" title="Ctrl+Mayús+S">Guardar como</button>
+      </div>
+    </div>
+
+    <div class="hero-copy wrap">
+      <h1 class="name"><span>Validador</span> <span>UML</span></h1>
+      <div class="hero-row">
+        <p class="lede">Validación de diagramas UML como lenguajes formales: análisis léxico, gramática LALR(1) y reglas semánticas.</p>
+        <ul class="hero-links">
+          <li><a href="https://github.com/mariano92004/validador-uml">Código en GitHub</a></li>
+          <li><a href="https://mariano92004.github.io/">Portfolio</a></li>
+          <li class="where">Clases, casos de uso, actividad, flujo y MCD</li>
+        </ul>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="bench wrap" id="banco" aria-labelledby="banco-titulo">
+      <h2 id="banco-titulo" class="visually-hidden">Validar un diagrama</h2>
+      <div class="bench-head">
+        <div class="choices" id="tipos" role="tablist" aria-label="Tipo de diagrama"></div>
+        <p class="kind-summary" id="resumen-tipo"></p>
+      </div>
+
+      <div class="bench-grid">
+        <div class="editor-col">
+          <div class="editor-bar">
+            <label for="editor">Diagrama<span class="notation" id="notacion"></span></label>
+            <p class="examples">Cargar ejemplo
+              <button type="button" class="link" data-ejemplo="correcto">correcto</button>
+              <button type="button" class="link" data-ejemplo="errores">con errores</button>
+            </p>
+          </div>
+          <div class="editor">
+            <div class="gutter" aria-hidden="true"><div class="gutter-inner" id="gutter"></div></div>
+            <div class="code">
+              <pre class="paint" id="paint" aria-hidden="true"></pre>
+              <textarea id="editor" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off" aria-describedby="nota-editor"></textarea>
+            </div>
+          </div>
+          <p class="editor-note" id="nota-editor">El borrador se guarda automáticamente en este equipo.</p>
+        </div>
+
+        <div class="result-col">
+          <p class="verdict" id="veredicto" data-tone="neutral" aria-live="polite"><span class="verdict-text">…</span><canvas aria-hidden="true"></canvas></p>
+          <p class="verdict-sub" id="veredicto-sub"></p>
+          <dl class="phases" id="fases"></dl>
+          <ul class="diags" id="diagnosticos" aria-label="Errores y avisos"></ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot wrap">
+    <p class="colophon"><span>Todo hecho con mucho ❤️ y ☕ desde Santa Fe Capital, Argentina</span> © 2026 Mariano Trevisan</p>
+  </footer>
+
+  <script src="campo.js"></script>
+  <script src="veredicto.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
