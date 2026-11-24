@@ -1,0 +1,25 @@
+@startuml
+' Este diagrama tiene errores a propósito.
+actor Cliente
+actor Vendedor
+usecase "Comprar" as UC1
+usecase "Login" as UC2
+usecase "Emitir factura" as UC3
+usecase "Ver historial" as UC4
+
+rectangle Sistema {
+  actor Gerente
+  usecase "Cobrar" as UC5
+}
+
+Cliente --> Vendedor
+Cliente --> UC1
+UC1 --> UC3
+UC1 ..> UC2 : <<include>>
+Cliente ..> UC2 : <<include>>
+UC3 --> UC5 : <<extend>>
+UC5 ..> UC3 : <<include>>
+UC3 ..> UC5 : <<include>>
+Gerente --> UC9
+Vendedor --|> UC1
+@enduml

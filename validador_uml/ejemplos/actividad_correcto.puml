@@ -1,0 +1,24 @@
+@startuml
+title Procesar un pedido
+|Ventas|
+start
+:Recibir pedido;
+if (¿Hay stock?) then (sí)
+  :Reservar productos;
+else (no)
+  :Avisar al cliente;
+  stop
+endif
+|Depósito|
+fork
+  :Emitir factura;
+fork again
+  :Preparar paquete;
+end fork
+while (¿Quedan bultos?) is (sí)
+  :Despachar bulto;
+endwhile (no)
+|Ventas|
+:Notificar el envío;
+stop
+@enduml

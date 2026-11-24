@@ -1,0 +1,27 @@
+@startuml
+' Este diagrama tiene errores a propósito.
+class Cliente {
+  - nombre : String
+  - nombre : String
+  + pagar(monto : Dinero) : void
+}
+
+class Pedido {
+  + {abstract} total() : double
+}
+
+interface Pagable {
+  - saldo : double
+  + cobrar() : void
+}
+
+class TarjetaCredito
+class Cliente
+
+Pagable <|-- TarjetaCredito
+Pedido ..|> Cliente
+Cliente "1..*" *-- "0..*" Pedido : hace
+Pedido "2..1" -- "1" Factura
+Cliente <|-- Pedido
+Pedido <|-- Cliente
+@enduml

@@ -1,0 +1,44 @@
+// Este modelo tiene errores a propósito.
+entidad Cliente {
+  #dni
+  nombre
+  email
+  email
+}
+
+entidad Pedido {
+  #numero
+  dni
+}
+
+entidad Producto {
+  descripcion
+}
+
+entidad Cliente {
+  #cuit
+}
+
+entidad debil Linea {
+  #renglon
+}
+
+relacion Realiza {
+  Cliente (0,n)
+  Pedido (1,1)
+  fecha
+}
+
+relacion Contiene {
+  Pedido (2,1)
+  Item (0,n)
+}
+
+relacion Suelta {
+  Pedido (0,n)
+}
+
+relacion Jerarquia {
+  Producto (0,n)
+  Producto (0,1)
+}

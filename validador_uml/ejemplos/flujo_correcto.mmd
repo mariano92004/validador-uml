@@ -1,0 +1,9 @@
+flowchart TD
+  %% Suma los números positivos que se ingresan
+  I([Inicio]) --> A[Suma = 0]
+  A --> L[/Leer N/]
+  L --> D{¿N > 0?}
+  D -->|sí| S[Suma = Suma + N]
+  S --> L
+  D -->|no| M[/Mostrar Suma/]
+  M --> F([Fin])

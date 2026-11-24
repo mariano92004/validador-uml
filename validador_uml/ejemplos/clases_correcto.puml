@@ -1,0 +1,60 @@
+@startuml
+' Biblioteca: socios, libros y préstamos
+title Biblioteca
+
+abstract class Persona {
+  # nombre : String
+  # dni : String
+  + {abstract} descripcion() : String
+}
+
+class Socio {
+  - nroSocio : int
+  + descripcion() : String
+  + puedePedir() : boolean
+}
+
+class Bibliotecario {
+  - legajo : int
+  + descripcion() : String
+  + registrar(p : Prestamo) : void
+}
+
+interface Prestable {
+  + prestar(socio : Socio) : Prestamo
+  + devolver() : void
+}
+
+class Libro {
+  - isbn : String
+  - titulo : String
+  - estado : EstadoEjemplar
+  + prestar(socio : Socio) : Prestamo
+  + devolver() : void
+}
+
+class Prestamo {
+  - desde : Date
+  - hasta : Date
+  + vencido() : boolean
+}
+
+class Biblioteca {
+  - nombre : String
+}
+
+enum EstadoEjemplar {
+  DISPONIBLE
+  PRESTADO
+  EXTRAVIADO
+}
+
+Persona <|-- Socio
+Persona <|-- Bibliotecario
+Libro ..|> Prestable
+Biblioteca "1" *-- "0..*" Libro : tiene
+Biblioteca "1" o-- "0..*" Socio
+Socio "1" -- "0..*" Prestamo : realiza
+Prestamo "0..*" --> "1" Libro
+Bibliotecario ..> Prestamo
+@enduml

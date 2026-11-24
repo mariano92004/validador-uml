@@ -1,0 +1,64 @@
+// Tienda: clientes, pedidos, productos y envíos
+entidad Cliente {
+  #dni
+  nombre
+  email
+}
+
+entidad Pedido {
+  #numero
+  fecha : fecha
+}
+
+entidad Producto {
+  #codigo
+  descripcion
+  precio : moneda
+}
+
+entidad Envio {
+  #seguimiento
+  empresa
+}
+
+entidad debil Pago {
+  #cuota
+  monto : moneda
+}
+
+entidad Empleado {
+  #legajo
+  nombre
+}
+
+relacion Realiza {
+  Cliente (0,n)
+  Pedido (1,1)
+}
+
+relacion Contiene {
+  Pedido (1,n)
+  Producto (0,n)
+  cantidad
+  precioUnitario : moneda
+}
+
+relacion Abona {
+  Pedido (0,n)
+  Pago (1,1)
+}
+
+relacion Despacha {
+  Pedido (0,1)
+  Envio (1,1)
+}
+
+relacion Prepara {
+  Empleado (0,n)
+  Envio (1,1)
+}
+
+relacion Supervisa {
+  Empleado (0,n) como jefe
+  Empleado (0,1) como subordinado
+}

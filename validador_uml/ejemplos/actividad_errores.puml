@@ -1,0 +1,22 @@
+@startuml
+' Este diagrama tiene errores a propósito.
+start
+:Leer datos;
+if (¿Datos válidos?) then (sí)
+  :Guardar;
+endif
+fork
+  :Enviar mail;
+end fork
+:;
+while ()
+  :Reintentar;
+endwhile
+if (¿Terminar?) then (sí)
+  stop
+  :Cerrar sesión;
+else (sí)
+  :Seguir;
+endif
+start
+@enduml

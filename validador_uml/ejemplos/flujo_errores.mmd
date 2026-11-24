@@ -1,0 +1,14 @@
+flowchart TD
+  %% Este diagrama tiene errores a propósito.
+  I([Inicio]) --> L[/Leer edad/]
+  I2([Inicio]) --> L
+  L --> D{¿Edad >= 18?}
+  D --> M[Mayor]
+  D -->|no| N[Menor]
+  M --> F([Fin])
+  N --- F
+  X[Huérfano] --> F
+  L --> P[Registrar]
+  P --> Q{¿Otra vez?}
+  Q -->|sí| P
+  Q -->|no| P
