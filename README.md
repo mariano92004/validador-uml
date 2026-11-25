@@ -8,7 +8,7 @@ gramática no puede expresar.
 
 | Diagrama     | Notación                  | Extensión       | Reglas |
 |--------------|---------------------------|-----------------|--------|
-| Clases       | PlantUML                  | `.puml`         | 22     |
+| Clases       | PlantUML                  | `.puml`         | 24     |
 | Casos de uso | PlantUML                  | `.puml`         | 19     |
 | Actividad    | PlantUML (sintaxis nueva) | `.puml`         | 15     |
 | Flujo        | Mermaid `flowchart`       | `.mmd`          | 16     |

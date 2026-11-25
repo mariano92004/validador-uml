@@ -137,6 +137,40 @@ class Semantica(unittest.TestCase):
         self.assertEqual(codes("mcd", text), [])
 
 
+class PlantUMLReal(unittest.TestCase):
+    """Construcciones frecuentes en diagramas de clases hechos con PlantUML."""
+
+    BASE = ("skinparam class {\n  BackgroundColor #FFFFFF\n  BorderColor #3A4A5A\n}\n"
+            "hide circle\n"
+            "legend top left\n<color:#C9DBF2>██</color> 1. Grupo\nendlegend\n"
+            "class Socio #C9DBF2 {\n  - nombre: String\n  # dni: String\n  #edad: int\n  # add(x: int): void\n}\n"
+            "class Curso #LightBlue {\n  - titulo: String\n}\n"
+            "class Inscripcion #FFF\n")
+
+    def test_estilos_colores_y_leyenda(self):
+        text = self.BASE + 'Socio "0..*" -- "0..*" Curso : cursa >\n(Socio, Curso) .. Inscripcion\n'
+        self.assertEqual(codes("clases", text), [])
+
+    def test_clase_de_asociacion_sin_asociacion(self):
+        text = self.BASE + "Socio --> Curso\n(Socio, Inscripcion) .. Curso\n"
+        self.assertIn("C22", codes("clases", text))
+
+    def test_clase_de_asociacion_con_linea_continua(self):
+        text = self.BASE + "Socio -- Curso\n(Socio, Curso) -- Inscripcion\n"
+        self.assertEqual(codes("clases", text), ["C23"])
+
+    def test_clase_de_asociacion_no_declarada(self):
+        text = self.BASE + "Socio -- Curso\n(Socio, Curso) .. Matricula\n"
+        self.assertIn("C02", codes("clases", text))
+
+    def test_tipo_desconocido_una_sola_vez(self):
+        text = ("class A {\n  - x: Estado\n  - y: Estado\n  + f(e: Estado): void\n}\n"
+                "class B\nA -- B\n")
+        diags = api.analyze("clases", text)["diagnostics"]
+        self.assertEqual([d["code"] for d in diags], ["C09"])
+        self.assertIn("3 veces", diags[0]["message"])
+
+
 class Robustez(unittest.TestCase):
     SNIPPETS = ["{", "}", "(", ")", ":", ";", "\n", '"', "-->", "<|--", "..|>", "*--", "class",
                 "if", "endif", "fork", "end", "#", "(0,n)", "([x])", "{x}", "|a|", "actor",

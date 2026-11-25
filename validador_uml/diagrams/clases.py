@@ -56,10 +56,24 @@ class Relation:
 
 
 @dataclass
+class AssocClass:
+    """Clase de asociación: (A, B) .. C"""
+    left: str
+    right: str
+    cls: str
+    left_at: Loc
+    right_at: Loc
+    cls_at: Loc
+    arrow: str
+    at: Loc
+
+
+@dataclass
 class ClassModel:
     classes: list[ClassDecl] = field(default_factory=list)
     relations: list[Relation] = field(default_factory=list)
     markers: list[Marker] = field(default_factory=list)
+    assoc_classes: list[AssocClass] = field(default_factory=list)
 
 
 # -- léxico --------------------------------------------------------------------
@@ -68,6 +82,10 @@ def _lexer() -> Lexer:
     lx = Lexer(" Los comentarios empiezan con '.")
     plantuml_base(lx)
     lx.token("ESTEREOTIPO", r"<<[^<>\n]+>>", "un estereotipo, como <<entity>>")
+    # Color de la clase: #C9DBF2, #FFF, o un nombre (#LightBlue) justo antes de «{».
+    # No se confunde con «#nombre» (visibilidad protegida): ese va seguido de «:» o «(».
+    lx.token("COLOR", r"#(?:[0-9A-Fa-f]{8}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})\b(?![ \t]*[(:<\[])"
+                      r"|#[A-Za-z]+(?:[/\\-][A-Za-z]+)?(?=[ \t]*\{)", "un color, como #C9DBF2")
     lx.token("FLECHA", UML_ARROW, "una flecha (<|--, ..|>, *--, o--, -->, ..>)")
     lx.token("MOD", r"\{[ \t]*(?:static|abstract|classifier)[ \t]*\}",
              "un modificador ({static} o {abstract})")
@@ -91,6 +109,8 @@ def _doc(v):
             model.relations.append(s)
         elif isinstance(s, Marker):
             model.markers.append(s)
+        elif isinstance(s, AssocClass):
+            model.assoc_classes.append(s)
     return model
 
 
@@ -108,7 +128,14 @@ def _class(v):
 
 def _enum(v):
     stereo = v[2].value[2:-2].strip() if v[2] else None
-    return ClassDecl(v[1].value, "enum", stereo, [], v[3] or [], loc(v[1]))
+    return ClassDecl(v[1].value, "enum", stereo, [], v[4] or [], loc(v[1]))
+
+
+def _assoc_class(v):
+    """(A, B) .. C"""
+    a, b, arrow, cls = v[1], v[3], v[5], v[6]
+    return AssocClass(a.value, b.value, cls.value, loc(a), loc(b), loc(cls),
+                      normalize_arrow(arrow.value), loc(arrow))
 
 
 def _mods(v):
@@ -162,16 +189,19 @@ RULES = [
     ("Sent -> Clase", first),
     ("Sent -> Enum", first),
     ("Sent -> Relacion", first),
+    ("Sent -> ClaseAsociacion", first),
     ("Sent -> MARCA", lambda v: Marker(v[0].value, loc(v[0]))),
     ("Sent -> DIRECTIVA", nothing),
 
     ("Clase -> Cabecera CuerpoOpt", _class),
-    ("Cabecera -> 'class' NOMBRE EsteOpt", _header("clase", 1, 2)),
-    ("Cabecera -> 'abstract' 'class' NOMBRE EsteOpt", _header("abstracta", 2, 3)),
-    ("Cabecera -> 'abstract' NOMBRE EsteOpt", _header("abstracta", 1, 2)),
-    ("Cabecera -> 'interface' NOMBRE EsteOpt", _header("interfaz", 1, 2)),
+    ("Cabecera -> 'class' NOMBRE EsteOpt ColorOpt", _header("clase", 1, 2)),
+    ("Cabecera -> 'abstract' 'class' NOMBRE EsteOpt ColorOpt", _header("abstracta", 2, 3)),
+    ("Cabecera -> 'abstract' NOMBRE EsteOpt ColorOpt", _header("abstracta", 1, 2)),
+    ("Cabecera -> 'interface' NOMBRE EsteOpt ColorOpt", _header("interfaz", 1, 2)),
     ("EsteOpt -> ESTEREOTIPO", first),
     ("EsteOpt -> ", nothing),
+    ("ColorOpt -> COLOR", nothing),
+    ("ColorOpt -> ", nothing),
     ("CuerpoOpt -> '{' Miembros '}'", second),
     ("CuerpoOpt -> ", nothing),
     ("Miembros -> Miembros LineaMiembro", append),
@@ -203,7 +233,7 @@ RULES = [
     ("Param -> NOMBRE TipoOpt", lambda v: (v[0].value, v[1])),
     ("Param -> Tipo NOMBRE", lambda v: (v[1].value, v[0])),
 
-    ("Enum -> 'enum' NOMBRE EsteOpt CuerpoEnumOpt", _enum),
+    ("Enum -> 'enum' NOMBRE EsteOpt ColorOpt CuerpoEnumOpt", _enum),
     ("CuerpoEnumOpt -> '{' Literales '}'", second),
     ("CuerpoEnumOpt -> ", nothing),
     ("Literales -> Literales LineaLiteral", lambda v: v[0] + (v[1] or [])),
@@ -215,6 +245,7 @@ RULES = [
     ("ListaNombres -> ListaNombres ',' NOMBRE", lambda v: v[0] + [(v[2].value, loc(v[2]))]),
 
     ("Relacion -> NOMBRE MultOpt FLECHA MultOpt NOMBRE EtiqOpt", _relation),
+    ("ClaseAsociacion -> '(' NOMBRE ',' NOMBRE ')' FLECHA NOMBRE", _assoc_class),
     ("MultOpt -> TEXTO", _mult),
     ("MultOpt -> ", nothing),
     ("EtiqOpt -> ':' Palabras", lambda v: " ".join(v[1])),
@@ -252,6 +283,8 @@ SEMANTIC_RULES = [
     R("C19", ERROR, "La generalización y la realización no llevan multiplicidades."),
     R("C20", AVISO, "Los métodos de una interfaz son públicos."),
     R("C21", AVISO, "Si el diagrama usa @startuml, también cierra con @enduml (y al revés)."),
+    R("C22", ERROR, "Una clase de asociación se apoya en una asociación existente entre las dos clases."),
+    R("C23", AVISO, "Una clase de asociación se une a su asociación con línea punteada (..)."),
 ]
 
 PRIMITIVES = {
@@ -320,10 +353,14 @@ def check(model: ClassModel):
             classes[cl.name] = cl
 
     referenced: set[str] = set()
+    unknown: dict[str, list[Loc]] = {}
     for cl in classes.values():
         if cl.name[:1].islower():
             c.report("C17", f"«{cl.name}» empieza con minúscula.", cl.at)
-        _check_members(c, cl, classes, referenced)
+        _check_members(c, cl, classes, referenced, unknown)
+    for tname, places in unknown.items():
+        veces = f" Se usa {len(places)} veces." if len(places) > 1 else ""
+        c.report("C09", f"El tipo «{tname}» no es primitivo ni una clase del diagrama.{veces}", places[0])
 
     parents: dict[str, list[str]] = {n: [] for n in classes}
     realizes: dict[str, list[str]] = {n: [] for n in classes}
@@ -377,6 +414,23 @@ def check(model: ClassModel):
         elif kind == "dependencia" and r.arrow == "..":
             c.report("C18", f"La dependencia entre «{r.left}» y «{r.right}» no indica hacia dónde va.", r.at)
 
+    for ac in model.assoc_classes:
+        missing = False
+        for name, at in ((ac.left, ac.left_at), (ac.right, ac.right_at), (ac.cls, ac.cls_at)):
+            if name not in classes:
+                c.report("C02", f"«{name}» no está declarada. Debe declararse con class, interface o enum.", at)
+                missing = True
+        related.update((ac.left, ac.right, ac.cls))
+        if ac.arrow != "..":
+            c.report("C23", f"«{ac.cls}» se une a la asociación con «{ac.arrow}»; corresponde «..».", ac.at)
+        if missing:
+            continue
+        pair = {ac.left, ac.right}
+        if not any({r.left, r.right} == pair and classify(r)[0] in ("asociacion", "agregacion", "composicion")
+                   for r in model.relations):
+            c.report("C22", f"«{ac.cls}» es clase de asociación de «{ac.left}» y «{ac.right}», "
+                            "pero no hay una asociación entre ellas.", ac.at)
+
     _check_cycles(c, classes, parents)
 
     for name, ps in parents.items():
@@ -393,7 +447,8 @@ def check(model: ClassModel):
     return c.diagnostics
 
 
-def _check_members(c: Checker, cl: ClassDecl, classes: dict[str, ClassDecl], referenced: set[str]) -> None:
+def _check_members(c: Checker, cl: ClassDecl, classes: dict[str, ClassDecl], referenced: set[str],
+                   unknown: dict[str, list[Loc]]) -> None:
     if cl.kind == "enum":
         if not cl.literals:
             c.report("C13", f"El enum «{cl.name}» no tiene literales.", cl.at)
@@ -417,7 +472,7 @@ def _check_members(c: Checker, cl: ClassDecl, classes: dict[str, ClassDecl], ref
                         referenced.add(tname)
                         referenced.add(cl.name)
                 elif tname.lower() not in PRIMITIVES and not re.fullmatch(r"[A-Z]", tname):
-                    c.report("C09", f"El tipo «{tname}» no es primitivo ni una clase del diagrama.", at)
+                    unknown.setdefault(tname, []).append(at)
 
         if mb.kind == "atributo":
             if mb.name in attrs:
@@ -545,6 +600,9 @@ def describe(model: ClassModel) -> dict:
             text += f" «{r.label}»."
         rels.append([f"{r.left} {r.arrow} {r.right}", text, r.at.line])
 
+    for ac in model.assoc_classes:
+        rels.append([f"({ac.left}, {ac.right}) {ac.arrow} {ac.cls}",
+                     f"{ac.cls} es la clase de asociación entre {ac.left} y {ac.right}.", ac.at.line])
     sections = [{"title": "Clases", "rows": rows}]
     if rels:
         sections.append({"title": "Relaciones", "rows": rels})
@@ -568,6 +626,11 @@ enum Estado {
 Persona <|-- Socio
 Libro ..|> Prestable
 Socio "1" -- "0..*" Prestamo : realiza
+
+' Clase de asociación y color
+class Inscripcion #C9DBF2
+Socio "0..*" -- "0..*" Curso
+(Socio, Curso) .. Inscripcion
 """
 
 KIND = DiagramKind(

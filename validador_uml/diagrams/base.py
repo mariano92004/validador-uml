@@ -120,6 +120,10 @@ def plantuml_base(lx: Lexer) -> None:
     lx.token("NL", r"\n")
     lx.token("MARCA", r"@startuml\b[^\n]*|@enduml\b", "una marca @startuml o @enduml",
              line_start=True)
+    # Bloques de estilo y texto de varias líneas: no describen el modelo, se aceptan enteros.
+    lx.token("DIRECTIVA", r"skinparam\b[^\n{]*\{[^}]*\}", line_start=True)
+    lx.token("DIRECTIVA", r"(legend|header|footer|title|caption)\b[^\n]*\n[\s\S]*?\n[ \t]*"
+                          r"end[ \t]?\1\b", line_start=True)
     lx.token("DIRECTIVA", _DIRECTIVES, line_start=True)
 
 
